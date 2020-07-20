@@ -10,7 +10,7 @@ pub enum Error {
     InvalidResponsePrefix,
     InvalidResponseCrcSum,
 
-    Boxed(Box<dyn std::error::Error>),
+    InvalidPayload(Option<Box<dyn std::error::Error>>),
 
     Io(io::Error),
     ParseInt(ParseIntError),

@@ -50,6 +50,12 @@ where
                 let mut computed_crc_sum = CRCu16::crc16xmodem();
                 computed_crc_sum.digest(item.bytes());
                 if crc_sum != computed_crc_sum.get_crc() {
+                    // To allow for '\r'-containing CRC sums, try calculating the checksum with the
+                    // next 1 and 2 bytes.
+                    // FIXME: This could cause the stream to be waiting forever on data that does
+                    //   not exist. It'll happen if the checksum is incorrect and contains '\r'.
+                    // TODO: Code it so that the CRC sum can contain a '|r'.
+
                     return Err(Error::InvalidResponseCrcSum);
                 }
 
