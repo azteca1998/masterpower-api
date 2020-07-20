@@ -1,0 +1,12 @@
+[package]
+name = "masterpower-api"
+version = "0.1.0"
+authors = ["Esteve Soler Arderiu <soler.arderiu@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+bytes = "0.5.6"
+crc-any = "2.3.4"
+log = "0.4.11"
+tokio = { version = "0.2.21", features = ["full"] }
+tokio-util = { version = "0.3.1", features = ["codec"] }
