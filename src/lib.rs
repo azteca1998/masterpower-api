@@ -1,6 +1,7 @@
 mod codec;
 mod command;
 mod error;
+mod inverter;
 
 #[cfg(test)]
 mod test {
