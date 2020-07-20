@@ -41,11 +41,6 @@ where
                 debug!("Decoding response {}.", C::COMMAND_NAME);
                 trace!("Decoding response ({}): {:?}.", C::COMMAND_NAME, &item[..]);
 
-                let prefix = item.split_to(size_of::<u8>());
-                if prefix != Bytes::from_static(b"(") {
-                    return Err(Error::InvalidResponsePrefix);
-                }
-
                 let suffix = item.split_off(item.len() - size_of::<u8>());
                 if suffix != Bytes::from_static(b"\r") {
                     unreachable!()
@@ -56,6 +51,11 @@ where
                 computed_crc_sum.digest(item.bytes());
                 if crc_sum != computed_crc_sum.get_crc() {
                     return Err(Error::InvalidResponseCrcSum);
+                }
+
+                let prefix = item.split_to(size_of::<u8>());
+                if prefix != Bytes::from_static(b"(") {
+                    return Err(Error::InvalidResponsePrefix);
                 }
 
                 let item = C::Response::decode(&mut item)?;

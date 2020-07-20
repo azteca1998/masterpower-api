@@ -1,7 +1,7 @@
-mod codec;
-mod command;
-mod error;
-mod inverter;
+pub mod codec;
+pub mod command;
+pub mod error;
+pub mod inverter;
 
 #[cfg(test)]
 mod test {
@@ -45,7 +45,7 @@ mod test {
         let mut buf = BytesMut::new();
         codec.encode((), &mut buf).unwrap();
 
-        let mut buf = BytesMut::from(b"(PI1234\x1e\x09\r".as_ref());
+        let mut buf = BytesMut::from(b"(PI1234\xe3\x52\r".as_ref());
         codec.decode(&mut buf).unwrap().unwrap();
     }
 }
