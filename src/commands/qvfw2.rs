@@ -13,7 +13,7 @@ impl Command for QVFW2 {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct QVFW2Response(pub usize, pub usize);
+pub struct QVFW2Response(pub u64, pub u64);
 
 impl Response for QVFW2Response {
     fn decode(src: &mut BytesMut) -> Result<Self> {
@@ -37,8 +37,8 @@ impl Response for QVFW2Response {
 
         let (version_major, version_minor) = src.split_at(idx);
 
-        let version_major = usize::from_str_radix(std::str::from_utf8(version_major)?, 16)?;
-        let version_minor = usize::from_str_radix(std::str::from_utf8(&version_minor[1..])?, 16)?;
+        let version_major = u64::from_str_radix(std::str::from_utf8(version_major)?, 16)?;
+        let version_minor = u64::from_str_radix(std::str::from_utf8(&version_minor[1..])?, 16)?;
 
         Ok(Self(version_major, version_minor))
     }
@@ -67,8 +67,8 @@ mod test {
     #[test]
     fn test_qvfw2_payload_decode() -> Result<()> {
         for _ in 0..1000 {
-            let n_maj: usize = random();
-            let n_min: usize = random();
+            let n_maj: u64 = random();
+            let n_min: u64 = random();
 
             let res = format!("VERFW2:{:X}.{:X}", n_maj, n_min);
 
@@ -98,8 +98,8 @@ mod test {
         let mut codec = Codec::<QVFW2>::new();
 
         for _ in 0..1000 {
-            let n_maj: usize = random();
-            let n_min: usize = random();
+            let n_maj: u64 = random();
+            let n_min: u64 = random();
 
             let mut res = format!("(VERFW2:{:X}.{:X}", n_maj, n_min).into_bytes();
             let mut crc_sum = CRCu16::crc16xmodem();

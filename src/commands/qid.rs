@@ -14,11 +14,11 @@ impl Command for QID {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct QIDResponse(pub usize);
+pub struct QIDResponse(pub u64);
 
 impl Response for QIDResponse {
     fn decode(src: &mut BytesMut) -> Result<Self> {
-        Ok(Self(usize::from_str(std::str::from_utf8(src.as_ref())?)?))
+        Ok(Self(u64::from_str(std::str::from_utf8(src.as_ref())?)?))
     }
 }
 
@@ -45,7 +45,7 @@ mod test {
     #[test]
     fn test_qid_payload_decode() -> Result<()> {
         for _ in 0..1000 {
-            let n: usize = random();
+            let n: u64 = random();
             let res = format!("{}", n);
 
             let mut buf = BytesMut::from(res.as_str());
@@ -74,7 +74,7 @@ mod test {
         let mut codec = Codec::<QID>::new();
 
         for _ in 0..1000 {
-            let n: usize = random();
+            let n: u64 = random();
 
             let mut res = format!("({}", n).into_bytes();
             let mut crc_sum = CRCu16::crc16xmodem();

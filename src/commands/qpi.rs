@@ -14,7 +14,7 @@ impl Command for QPI {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct QPIResponse(pub usize);
+pub struct QPIResponse(pub u64);
 
 impl Response for QPIResponse {
     fn decode(src: &mut BytesMut) -> Result<Self> {
@@ -22,7 +22,7 @@ impl Response for QPIResponse {
             return Err(Error::InvalidPayload(None));
         }
 
-        Ok(Self(usize::from_str(std::str::from_utf8(
+        Ok(Self(u64::from_str(std::str::from_utf8(
             src[2..].as_ref(),
         )?)?))
     }
@@ -51,7 +51,7 @@ mod test {
     #[test]
     fn test_qpi_payload_decode() -> Result<()> {
         for _ in 0..1000 {
-            let n: usize = random();
+            let n: u64 = random();
             let res = format!("PI{}", n);
 
             let mut buf = BytesMut::from(res.as_str());
@@ -80,7 +80,7 @@ mod test {
         let mut codec = Codec::<QPI>::new();
 
         for _ in 0..1000 {
-            let n: usize = random();
+            let n: u64 = random();
 
             let mut res = format!("(PI{}", n).into_bytes();
             let mut crc_sum = CRCu16::crc16xmodem();
