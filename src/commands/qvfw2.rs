@@ -25,7 +25,7 @@ impl Response for QVFW2Response {
 
         let idx = src
             .iter()
-            .cloned()
+            .copied()
             .enumerate()
             .find(|(_, x)| *x == '.' as u8)
             .map(|(i, _)| i);
