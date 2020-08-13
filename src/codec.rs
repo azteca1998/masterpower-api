@@ -1,10 +1,9 @@
 use crate::command::{Command, Request, Response};
 use crate::error::{Error, Result};
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, BytesMut};
 use crc_any::CRCu16;
 use log::{debug, trace};
 use std::marker::PhantomData;
-use std::mem::size_of;
 use tokio_util::codec::{Decoder, Encoder};
 
 pub struct Codec<C> {
@@ -16,6 +15,19 @@ impl<C> Codec<C> {
         Self {
             phantom: PhantomData::default(),
         }
+    }
+
+    fn compute_crc(data: &[u8]) -> u16 {
+        let mut computed_crc_sum = CRCu16::crc16xmodem();
+        computed_crc_sum.digest(data);
+
+        computed_crc_sum.get_crc()
+    }
+}
+
+impl<C> Default for Codec<C> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -31,43 +43,59 @@ where
             .iter()
             .copied()
             .enumerate()
-            .find(|(_, x)| *x == '\r' as u8)
+            .find(|(_, x)| *x == b'\r')
             .map(|(i, _)| i);
 
         Ok(match maybe_index {
             Some(index) => {
-                let mut item = src.split_to(index + 1);
+                let mut item = &src[..index];
+                if *item.first().unwrap() != b'(' {
+                    unimplemented!()
+                }
 
                 debug!("Decoding response {}.", C::COMMAND_NAME);
                 trace!("Decoding response ({}): {:?}.", C::COMMAND_NAME, &item[..]);
 
-                let suffix = item.split_off(item.len() - size_of::<u8>());
-                if suffix != Bytes::from_static(b"\r") {
-                    unreachable!()
+                for step in 0..3 {
+                    // Check the CRC for the current detected payload.
+                    let crc_sum = Self::compute_crc(&item[..item.len() - 2]);
+                    if crc_sum == (&item[item.len() - 2..]).get_u16() {
+                        break;
+                    }
+
+                    // Check src length.
+                    // Ensure the new command response ends in \r.
+                    if index + step + 1 == src.len()
+                        || !match step {
+                            0 => {
+                                let check = src[index + 1] == b'\r';
+                                if !check
+                                    && (index + step + 2 < src.len() && src[index + 2] == b'\r')
+                                {
+                                    continue;
+                                }
+
+                                check
+                            }
+                            1 => src[index + 2] == b'\r',
+                            _ => unimplemented!(),
+                        }
+                    {
+                        return Err(Error::InvalidResponseCrcSum);
+                    }
+
+                    item = &src[..index + step + 1];
                 }
 
-                let crc_sum = item.split_off(item.len() - size_of::<u16>()).get_u16();
-                let mut computed_crc_sum = CRCu16::crc16xmodem();
-                computed_crc_sum.digest(item.bytes());
-                if crc_sum != computed_crc_sum.get_crc() {
-                    // To allow for '\r'-containing CRC sums, try calculating the checksum with the
-                    // next 1 and 2 bytes.
-                    // FIXME: This could cause the stream to be waiting forever on data that does
-                    //   not exist. It'll happen if the checksum is incorrect and contains '\r'.
-                    // TODO: Code it so that the CRC sum can contain a '|r'.
+                // TODO: Do this without copying memory.
+                let decoded_item =
+                    C::Response::decode(&mut BytesMut::from(&item[1..item.len() - 2]))?;
+                trace!("Decoded response ({}): {:?}", C::COMMAND_NAME, decoded_item);
 
-                    return Err(Error::InvalidResponseCrcSum);
-                }
+                let item_len = item.len();
+                src.advance(item_len + 1);
 
-                let prefix = item.split_to(size_of::<u8>());
-                if prefix != Bytes::from_static(b"(") {
-                    return Err(Error::InvalidResponsePrefix);
-                }
-
-                let item = C::Response::decode(&mut item)?;
-                trace!("Decoded response ({}): {:?}", C::COMMAND_NAME, item);
-
-                Some(item)
+                Some(decoded_item)
             }
             None => None,
         })
@@ -103,7 +131,7 @@ where
         // Put the CRC sum.
         // Put the carriage return.
         dst.put_u16(crc_sum);
-        dst.put_u8('\r' as u8);
+        dst.put_u8(b'\r');
 
         trace!(
             "Encoded command ({}): {:?}",
