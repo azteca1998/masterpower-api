@@ -27,7 +27,7 @@ impl Response for QVFW2Response {
             .iter()
             .copied()
             .enumerate()
-            .find(|(_, x)| *x == '.' as u8)
+            .find(|(_, x)| *x == b'.')
             .map(|(i, _)| i);
         let idx = if let Some(x) = idx {
             x
@@ -105,7 +105,7 @@ mod test {
             let mut crc_sum = CRCu16::crc16xmodem();
             crc_sum.digest(res.as_slice());
             res.extend_from_slice(crc_sum.get_crc().to_be_bytes().as_ref());
-            res.push('\r' as u8);
+            res.push(b'\r');
 
             let mut buf = BytesMut::from(res.as_slice());
             let item = codec.decode(&mut buf)?;

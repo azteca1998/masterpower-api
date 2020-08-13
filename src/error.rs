@@ -1,5 +1,5 @@
 use std::fmt::{self, Debug, Display};
-use std::num::ParseIntError;
+use std::num::{ParseFloatError, ParseIntError};
 use std::str::Utf8Error;
 use std::{io, result};
 
@@ -13,6 +13,7 @@ pub enum Error {
     InvalidPayload(Option<Box<dyn std::error::Error>>),
 
     Io(io::Error),
+    ParseFloat(ParseFloatError),
     ParseInt(ParseIntError),
     Utf8(Utf8Error),
 }
@@ -29,6 +30,12 @@ impl std::error::Error for Error {}
 impl From<io::Error> for Error {
     fn from(inner: io::Error) -> Self {
         Self::Io(inner)
+    }
+}
+
+impl From<ParseFloatError> for Error {
+    fn from(inner: ParseFloatError) -> Self {
+        Self::ParseFloat(inner)
     }
 }
 
