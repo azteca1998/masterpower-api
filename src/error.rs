@@ -9,6 +9,7 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
     InvalidResponsePrefix,
     InvalidResponseCrcSum,
+    InvalidResponseFormat,
 
     InvalidPayload(Option<Box<dyn std::error::Error>>),
 
