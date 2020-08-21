@@ -40,8 +40,8 @@ pub struct QPIGSResponse {
 
 #[derive(Debug, PartialEq)]
 pub struct DeviceStatus {
-    charge_status: DeviceChargingStatus,
-    active_load: bool,
+    pub charge_status: DeviceChargingStatus,
+    pub active_load: bool,
 }
 
 #[derive(Debug, PartialEq)]
