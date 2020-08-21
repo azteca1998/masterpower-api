@@ -16,6 +16,8 @@ pub enum Error {
     ParseFloat(ParseFloatError),
     ParseInt(ParseIntError),
     Utf8(Utf8Error),
+
+    InvalidDeviceStatus,
 }
 
 impl Display for Error {

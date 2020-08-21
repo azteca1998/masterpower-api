@@ -2,7 +2,7 @@ use crate::command::{Command, Response};
 use crate::commands::qpigs::DeviceChargingStatus::{
     ChargingFromAC, ChargingFromSCC, ChargingFromSCCAndAC, NotCharging,
 };
-use crate::error::Result;
+use crate::error::{Error, Result};
 use bytes::BytesMut;
 use std::str::from_utf8;
 use std::str::FromStr;
@@ -112,7 +112,7 @@ impl Response for QPIGSResponse {
                     "110" => ChargingFromSCC,
                     "101" => ChargingFromAC,
                     "111" => ChargingFromSCCAndAC,
-                    _ => unimplemented!(),
+                    _ => return Err(Error::InvalidDeviceStatus),
                 },
             },
         })
@@ -275,7 +275,7 @@ mod test {
                             "110" => ChargingFromSCC,
                             "101" => ChargingFromAC,
                             "111" => ChargingFromSCCAndAC,
-                            _ => unimplemented!(),
+                            _ => unreachable!(),
                         },
                     },
                 })
