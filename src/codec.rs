@@ -200,7 +200,12 @@ mod test {
         let item = codec.decode(&mut buf)?;
 
         println!("{:?}", item);
-        assert_eq!(item.unwrap(), QIDResponse(12345));
+        assert_eq!(
+            item.unwrap(),
+            QIDResponse {
+                serial_number: 12345
+            }
+        );
 
         Ok(())
     }

@@ -18,6 +18,7 @@ pub enum Error {
     ParseInt(ParseIntError),
     Utf8(Utf8Error),
 
+    // QPIGS
     InvalidDeviceStatus,
 }
 

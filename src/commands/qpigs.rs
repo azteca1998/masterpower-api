@@ -4,6 +4,7 @@ use crate::commands::qpigs::DeviceChargingStatus::{
 };
 use crate::error::{Error, Result};
 use bytes::BytesMut;
+use serde_derive::Serialize;
 use std::str::from_utf8;
 use std::str::FromStr;
 
@@ -17,7 +18,7 @@ impl Command for QPIGS {
     type Response = QPIGSResponse;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct QPIGSResponse {
     pub grid_voltage: f32,
     pub grid_frequency: f32,
@@ -38,13 +39,13 @@ pub struct QPIGSResponse {
     pub device_status: DeviceStatus,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct DeviceStatus {
     pub charge_status: DeviceChargingStatus,
     pub active_load: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum DeviceChargingStatus {
     NotCharging,
     ChargingFromSCC,
@@ -85,8 +86,6 @@ impl Response for QPIGSResponse {
         let battery_scc_voltage = f32::from_str(from_utf8(&src[idxs[13] + 1..idxs[14]])?)?;
         let battery_discharge_current = usize::from_str(from_utf8(&src[idxs[14] + 1..idxs[15]])?)?;
         let device_status = &src[idxs[15] + 1..idxs[16]];
-
-        // println!("Remaining: {:?}", &src[idxs[16] + 1..]);
 
         Ok(Self {
             grid_voltage,
