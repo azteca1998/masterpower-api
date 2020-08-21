@@ -2,6 +2,7 @@ use crate::codec::Codec;
 use crate::command::Command;
 use crate::error::{Error, Result};
 use bytes::{Buf, BytesMut};
+use log::trace;
 use tokio::io::{AsyncRead, AsyncWrite, ErrorKind};
 use tokio::prelude::*;
 use tokio_util::codec::{Decoder, Encoder};
@@ -41,6 +42,7 @@ where
         codec.encode(req, &mut buf)?;
 
         self.stream.write_all(buf.bytes()).await?;
+        trace!("Writing command to stream");
 
         Ok(loop {
             self.buffer_in.reserve(1024);
@@ -48,6 +50,8 @@ where
             if len == 0 {
                 return Err(Error::Io(ErrorKind::UnexpectedEof.into()));
             }
+
+            trace!("Read {} bytes from stream", len);
 
             if let Some(item) = codec.decode(&mut self.buffer_in)? {
                 break item;
