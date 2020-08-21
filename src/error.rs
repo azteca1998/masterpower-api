@@ -20,6 +20,15 @@ pub enum Error {
 
     // QPIGS
     InvalidDeviceStatus,
+
+    // QPIRI
+    InvalidDeviceBatteryType,
+    InvalidDeviceInputVoltageRange,
+    InvalidDeviceOutputSourcePriority,
+    InvalidDeviceChargeSourcePriority,
+    InvalidDeviceMachineType,
+    InvalidDeviceTopology,
+    InvalidDeviceOutputMode,
 }
 
 impl Display for Error {
