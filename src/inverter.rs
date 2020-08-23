@@ -41,9 +41,12 @@ where
         let mut buf = BytesMut::new();
         codec.encode(req, &mut buf)?;
 
-        self.stream.write_all(buf.bytes()).await?;
         trace!("Writing command to stream");
+        self.stream.flush().await?;
+        self.stream.write_all(buf.bytes()).await?;
+        // trace!("Command written successfully");
 
+        // trace!("Buffer contents before first read: {:?}", self.buffer_in);
         Ok(loop {
             self.buffer_in.reserve(1024);
             let len = self.stream.read_buf(&mut self.buffer_in).await?;
@@ -51,7 +54,8 @@ where
                 return Err(Error::Io(ErrorKind::UnexpectedEof.into()));
             }
 
-            trace!("Read {} bytes from stream", len);
+            // trace!("Read {} bytes from stream", len);
+            // trace!("Calling decode with stream: {:?}", self.buffer_in);
 
             if let Some(item) = codec.decode(&mut self.buffer_in)? {
                 break item;

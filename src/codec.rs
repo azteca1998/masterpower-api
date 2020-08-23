@@ -49,9 +49,10 @@ where
         Ok(match maybe_index {
             Some(index) => {
                 let mut item = &src[..index];
+                let mut recover_length = 0;
                 if *item.first().unwrap() != b'(' {
                     trace!(
-                        "Invalid response format ({}): {:?}.",
+                        "Invalid response format ({}): {:?}",
                         C::COMMAND_NAME,
                         &item[..]
                     );
@@ -60,11 +61,13 @@ where
                     let index = item.iter().position(|&r| r == b'(');
 
                     if index.is_none() {
+                        src.advance(src.len());
                         return Err(Error::InvalidResponseFormat);
                     }
 
                     trace!("Attempting to recover from invalid response");
                     let split = item.split_at(index.unwrap());
+                    recover_length = split.0.len();
                     item = split.1;
                 }
 
@@ -96,6 +99,7 @@ where
                             _ => unimplemented!(),
                         }
                     {
+                        src.advance(src.len());
                         return Err(Error::InvalidResponseCrcSum);
                     }
 
@@ -108,7 +112,7 @@ where
                 trace!("Decoded response ({}): {:?}", C::COMMAND_NAME, decoded_item);
 
                 let item_len = item.len();
-                src.advance(item_len + 1);
+                src.advance(item_len + recover_length + 1);
 
                 Some(decoded_item)
             }
