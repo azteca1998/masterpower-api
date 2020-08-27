@@ -29,6 +29,9 @@ pub enum Error {
     InvalidDeviceMachineType,
     InvalidDeviceTopology,
     InvalidDeviceOutputMode,
+
+    // QMOD
+    InvalidDeviceMode,
 }
 
 impl Display for Error {
