@@ -63,7 +63,7 @@ mod test {
     use tokio_util::codec::{Decoder, Encoder};
 
     #[test]
-    fn test_qid_payload_encode() -> Result<()> {
+    fn test_qmod_payload_encode() -> Result<()> {
         let req: <QMOD as Command>::Request = ();
 
         assert_eq!(req.encode()?, None);
@@ -72,7 +72,7 @@ mod test {
     }
 
     #[test]
-    fn test_qid_payload_decode() -> Result<()> {
+    fn test_qmod_payload_decode() -> Result<()> {
         let device_mode_options = ["P", "S", "L", "B", "F", "H"];
 
         for _ in 0..1000 {
@@ -102,7 +102,7 @@ mod test {
     }
 
     #[test]
-    fn test_qid_command_encode() -> Result<()> {
+    fn test_qmod_command_encode() -> Result<()> {
         let mut codec = Codec::<QMOD>::new();
 
         let mut buf = BytesMut::new();
@@ -114,7 +114,7 @@ mod test {
     }
 
     #[test]
-    fn test_qid_command_decode() -> Result<()> {
+    fn test_qmod_command_decode() -> Result<()> {
         let mut codec = Codec::<QMOD>::new();
         let device_mode_options = ["P", "S", "L", "B", "F", "H"];
 

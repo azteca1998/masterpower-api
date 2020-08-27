@@ -32,6 +32,9 @@ pub enum Error {
 
     // QMOD
     InvalidDeviceMode,
+
+    // QPIWS
+    InvalidWarningStatus,
 }
 
 impl Display for Error {
