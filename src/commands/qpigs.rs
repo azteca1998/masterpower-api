@@ -2,8 +2,9 @@ use crate::command::{Command, Response};
 use crate::commands::qpigs::DeviceChargingStatus::{
     ChargingFromAC, ChargingFromSCC, ChargingFromSCCAndAC, NotCharging,
 };
-use crate::error::Result;
+use crate::error::{Error, Result};
 use bytes::BytesMut;
+use serde_derive::Serialize;
 use std::str::from_utf8;
 use std::str::FromStr;
 
@@ -17,7 +18,7 @@ impl Command for QPIGS {
     type Response = QPIGSResponse;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct QPIGSResponse {
     pub grid_voltage: f32,
     pub grid_frequency: f32,
@@ -38,13 +39,13 @@ pub struct QPIGSResponse {
     pub device_status: DeviceStatus,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct DeviceStatus {
-    charge_status: DeviceChargingStatus,
-    active_load: bool,
+    pub charge_status: DeviceChargingStatus,
+    pub active_load: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum DeviceChargingStatus {
     NotCharging,
     ChargingFromSCC,
@@ -86,8 +87,6 @@ impl Response for QPIGSResponse {
         let battery_discharge_current = usize::from_str(from_utf8(&src[idxs[14] + 1..idxs[15]])?)?;
         let device_status = &src[idxs[15] + 1..idxs[16]];
 
-        // println!("Remaining: {:?}", &src[idxs[16] + 1..]);
-
         Ok(Self {
             grid_voltage,
             grid_frequency,
@@ -112,7 +111,7 @@ impl Response for QPIGSResponse {
                     "110" => ChargingFromSCC,
                     "101" => ChargingFromAC,
                     "111" => ChargingFromSCCAndAC,
-                    _ => unimplemented!(),
+                    _ => return Err(Error::InvalidDeviceStatus),
                 },
             },
         })
@@ -275,7 +274,7 @@ mod test {
                             "110" => ChargingFromSCC,
                             "101" => ChargingFromAC,
                             "111" => ChargingFromSCCAndAC,
-                            _ => unimplemented!(),
+                            _ => unreachable!(),
                         },
                     },
                 })

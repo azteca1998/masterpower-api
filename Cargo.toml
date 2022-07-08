@@ -10,6 +10,8 @@ crc-any = "2.3.5"
 log = "0.4.11"
 tokio = { version = "0.2.22", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["codec"] }
+serde = "^1.0.8"
+serde_derive = "^1.0.8"
 
 [dev-dependencies]
 rand = "0.7.3"

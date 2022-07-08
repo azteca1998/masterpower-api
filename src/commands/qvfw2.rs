@@ -1,6 +1,7 @@
 use crate::command::{Command, Response};
 use crate::error::{Error, Result};
 use bytes::BytesMut;
+use serde_derive::Serialize;
 
 pub struct QVFW2;
 
@@ -12,8 +13,11 @@ impl Command for QVFW2 {
     type Response = QVFW2Response;
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct QVFW2Response(pub u64, pub u64);
+#[derive(Debug, Eq, PartialEq, Serialize)]
+pub struct QVFW2Response {
+    pub major: u64,
+    pub minor: u64,
+}
 
 impl Response for QVFW2Response {
     fn decode(src: &mut BytesMut) -> Result<Self> {
@@ -40,7 +44,10 @@ impl Response for QVFW2Response {
         let version_major = u64::from_str_radix(std::str::from_utf8(version_major)?, 16)?;
         let version_minor = u64::from_str_radix(std::str::from_utf8(&version_minor[1..])?, 16)?;
 
-        Ok(Self(version_major, version_minor))
+        Ok(Self {
+            major: version_major,
+            minor: version_minor,
+        })
     }
 }
 
@@ -75,7 +82,13 @@ mod test {
             let mut buf = BytesMut::from(res.as_str());
             let item = <QVFW2 as Command>::Response::decode(&mut buf)?;
 
-            assert_eq!(item, QVFW2Response(n_maj, n_min));
+            assert_eq!(
+                item,
+                QVFW2Response {
+                    major: n_maj,
+                    minor: n_min
+                }
+            );
         }
 
         Ok(())
@@ -111,7 +124,13 @@ mod test {
             let item = codec.decode(&mut buf)?;
 
             assert_eq!(buf.remaining(), 0);
-            assert_eq!(item, Some(QVFW2Response(n_maj, n_min)));
+            assert_eq!(
+                item,
+                Some(QVFW2Response {
+                    major: n_maj,
+                    minor: n_min
+                })
+            );
         }
 
         Ok(())

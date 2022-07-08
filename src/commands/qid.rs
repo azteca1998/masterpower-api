@@ -1,6 +1,7 @@
 use crate::command::{Command, Response};
 use crate::error::Result;
 use bytes::BytesMut;
+use serde_derive::Serialize;
 use std::str::FromStr;
 
 pub struct QID;
@@ -13,12 +14,16 @@ impl Command for QID {
     type Response = QIDResponse;
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct QIDResponse(pub u64);
+#[derive(Debug, Eq, PartialEq, Serialize)]
+pub struct QIDResponse {
+    pub(crate) serial_number: u64,
+}
 
 impl Response for QIDResponse {
     fn decode(src: &mut BytesMut) -> Result<Self> {
-        Ok(Self(u64::from_str(std::str::from_utf8(src.as_ref())?)?))
+        Ok(Self {
+            serial_number: u64::from_str(std::str::from_utf8(src.as_ref())?)?,
+        })
     }
 }
 
@@ -51,7 +56,7 @@ mod test {
             let mut buf = BytesMut::from(res.as_str());
             let item = <QID as Command>::Response::decode(&mut buf)?;
 
-            assert_eq!(item, QIDResponse(n));
+            assert_eq!(item, QIDResponse { serial_number: n });
         }
 
         Ok(())
@@ -86,7 +91,7 @@ mod test {
             let item = codec.decode(&mut buf)?;
 
             assert_eq!(buf.remaining(), 0);
-            assert_eq!(item, Some(QIDResponse(n)));
+            assert_eq!(item, Some(QIDResponse { serial_number: n }));
         }
 
         Ok(())

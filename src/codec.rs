@@ -49,8 +49,26 @@ where
         Ok(match maybe_index {
             Some(index) => {
                 let mut item = &src[..index];
+                let mut recover_length = 0;
                 if *item.first().unwrap() != b'(' {
-                    unimplemented!()
+                    trace!(
+                        "Invalid response format ({}): {:?}",
+                        C::COMMAND_NAME,
+                        &item[..]
+                    );
+
+                    // Try to recover by removing everything until the first (
+                    let index = item.iter().position(|&r| r == b'(');
+
+                    if index.is_none() {
+                        src.advance(src.len());
+                        return Err(Error::InvalidResponseFormat);
+                    }
+
+                    trace!("Attempting to recover from invalid response");
+                    let split = item.split_at(index.unwrap());
+                    recover_length = split.0.len();
+                    item = split.1;
                 }
 
                 debug!("Decoding response {}.", C::COMMAND_NAME);
@@ -81,6 +99,7 @@ where
                             _ => unimplemented!(),
                         }
                     {
+                        src.advance(src.len());
                         return Err(Error::InvalidResponseCrcSum);
                     }
 
@@ -93,7 +112,7 @@ where
                 trace!("Decoded response ({}): {:?}", C::COMMAND_NAME, decoded_item);
 
                 let item_len = item.len();
-                src.advance(item_len + 1);
+                src.advance(item_len + recover_length + 1);
 
                 Some(decoded_item)
             }
@@ -137,6 +156,59 @@ where
             "Encoded command ({}): {:?}",
             C::COMMAND_NAME,
             &dst[start_len..]
+        );
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::codec::Codec;
+    use crate::commands::qid::{QIDResponse, QID};
+    use crate::error::Result;
+    use bytes::BytesMut;
+    use crc_any::CRCu16;
+    use tokio_util::codec::Decoder;
+
+    #[test]
+    fn test_decode_invalid_format() -> Result<()> {
+        let mut codec = Codec::<QID>::new();
+
+        let mut res = String::from("123 123").into_bytes();
+        let mut crc_sum = CRCu16::crc16xmodem();
+        crc_sum.digest(res.as_slice());
+        res.extend_from_slice(crc_sum.get_crc().to_be_bytes().as_ref());
+        res.push(b'\r');
+
+        let mut buf = BytesMut::from(res.as_slice());
+        let item = codec.decode(&mut buf);
+
+        assert!(item.is_err());
+        // assert_eq!(item, Err(Error::InvalidResponseFormat));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_recover_invalid_format() -> Result<()> {
+        let mut codec = Codec::<QID>::new();
+        // let mut res = String::from("\x00\x00\x00\x00\x00\x00(001.0 00.0 229.0 50.0 0092 0092 003 420 27.12 000 100 0322 0000 076.8 27.16 00005 10010110 17 04 00010 100©w").into_bytes();
+        let mut res = String::from("\x00\x00\x00\x00\x00\x00(12345").into_bytes();
+        let mut crc_sum = CRCu16::crc16xmodem();
+        crc_sum.digest(res.as_slice());
+        res.extend_from_slice(crc_sum.get_crc().to_be_bytes().as_ref());
+        res.push(b'\r');
+
+        let mut buf = BytesMut::from(res.as_slice());
+        let item = codec.decode(&mut buf)?;
+
+        println!("{:?}", item);
+        assert_eq!(
+            item.unwrap(),
+            QIDResponse {
+                serial_number: 12345
+            }
         );
 
         Ok(())

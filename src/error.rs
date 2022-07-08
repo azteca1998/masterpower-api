@@ -9,6 +9,7 @@ pub type Result<T> = result::Result<T, Error>;
 pub enum Error {
     InvalidResponsePrefix,
     InvalidResponseCrcSum,
+    InvalidResponseFormat,
 
     InvalidPayload(Option<Box<dyn std::error::Error>>),
 
@@ -16,6 +17,24 @@ pub enum Error {
     ParseFloat(ParseFloatError),
     ParseInt(ParseIntError),
     Utf8(Utf8Error),
+
+    // QPIGS
+    InvalidDeviceStatus,
+
+    // QPIRI
+    InvalidDeviceBatteryType,
+    InvalidDeviceInputVoltageRange,
+    InvalidDeviceOutputSourcePriority,
+    InvalidDeviceChargeSourcePriority,
+    InvalidDeviceMachineType,
+    InvalidDeviceTopology,
+    InvalidDeviceOutputMode,
+
+    // QMOD
+    InvalidDeviceMode,
+
+    // QPIWS
+    InvalidWarningStatus,
 }
 
 impl Display for Error {

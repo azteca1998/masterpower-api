@@ -1,6 +1,7 @@
 use crate::command::{Command, Response};
 use crate::error::{Error, Result};
 use bytes::BytesMut;
+use serde_derive::Serialize;
 use std::str::FromStr;
 
 pub struct QPI;
@@ -13,8 +14,10 @@ impl Command for QPI {
     type Response = QPIResponse;
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct QPIResponse(pub u64);
+#[derive(Debug, Eq, PartialEq, Serialize)]
+pub struct QPIResponse {
+    pub protocol_id: u64,
+}
 
 impl Response for QPIResponse {
     fn decode(src: &mut BytesMut) -> Result<Self> {
@@ -22,9 +25,9 @@ impl Response for QPIResponse {
             return Err(Error::InvalidPayload(None));
         }
 
-        Ok(Self(u64::from_str(std::str::from_utf8(
-            src[2..].as_ref(),
-        )?)?))
+        Ok(Self {
+            protocol_id: u64::from_str(std::str::from_utf8(src[2..].as_ref())?)?,
+        })
     }
 }
 
@@ -57,7 +60,7 @@ mod test {
             let mut buf = BytesMut::from(res.as_str());
             let item = <QPI as Command>::Response::decode(&mut buf)?;
 
-            assert_eq!(item, QPIResponse(n));
+            assert_eq!(item, QPIResponse { protocol_id: n });
         }
 
         Ok(())
@@ -92,7 +95,7 @@ mod test {
             let item = codec.decode(&mut buf)?;
 
             assert_eq!(buf.remaining(), 0);
-            assert_eq!(item, Some(QPIResponse(n)));
+            assert_eq!(item, Some(QPIResponse { protocol_id: n }));
         }
 
         Ok(())
